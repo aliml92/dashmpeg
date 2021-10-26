@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='mpegdash',
-    version='0.0.1',
+    version='0.0.2',
     author='Alisher M',
     author_email='alisherm@test.com',
     description='Super simple wrapper around shaka-packager',
