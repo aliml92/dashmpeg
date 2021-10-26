@@ -88,8 +88,9 @@ class DashReverse:
     def run(self, src_path, dest_path):
         if self.__is_key_valid():
             files = os.listdir(src_path)
-            if len(files) == 2:
+            if len(files) == 3:
                 f_t1, f_ext1 = os.path.splitext(files[0])
+                
                 f_t2, f_ext2 = os.path.splitext(files[1])
                 t1 = t2 = f_t1.split('-', 1)[0]
                 if f_ext1 == "webm":
