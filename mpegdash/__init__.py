@@ -1,1 +1,1 @@
-from . import dash
+from .dash import *
