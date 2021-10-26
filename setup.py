@@ -16,6 +16,6 @@ setuptools.setup(
         "Bug Tracker": "https://github.com/aliml92/mpegdash/issues"
     },
     license='MIT',
-    packages=['mpegdashprep'],
+    packages=['mpegdash'],
     install_requires=['requests'],
 )
