@@ -87,7 +87,7 @@ class DashReverse:
 # ----  generate encrypted dash content  ---- # 
     def run(self, src_path, dest_path):
         if self.__is_key_valid():
-            files = os.listdir(self.src_path)
+            files = os.listdir(src_path)
             if len(files) == 2:
                 f_t1, f_ext1 = os.path.splitext(files[0])
                 f_t2, f_ext2 = os.path.splitext(files[1])
