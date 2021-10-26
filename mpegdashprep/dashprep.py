@@ -25,7 +25,7 @@ class DashPrep:
         self.kid = kid or default_key_id
         self.key = key or default_key
 
-# ----  generate encrypted dash content  ---- #
+# ----  generate encrypted dash content  ---- # dfgfd
     def run(self):
         if self.__is_key_valid():
             files = os.listdir(self.src_path)
