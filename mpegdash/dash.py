@@ -9,6 +9,8 @@
 
 import os, secrets
 import subprocess
+import glob
+from pathlib import Path
 
 # ---- hardcoded default keys (test purposes only) ---- #
 default_key_id = "0123456789abcdef0123456789abcdef"
@@ -27,7 +29,7 @@ class Dash:
 
 # ----  generate encrypted dash content  ---- # 
     def run(self):
-        if self.__is_key_valid():
+        if _is_key_valid(self.kid, self.key):
             files = os.listdir(self.src_path)
             for video in files:
                 v_title, v_ext = os.path.splitext(video)
@@ -66,13 +68,7 @@ class Dash:
     def get_key(self):
         return { self.kid : self.key }
 
-# ----  check key validitiy (private method) ---- #
-    def __is_key_valid(self):
-        try:
-            int(self.kid, 32) and int(self.key, 32)
-            return True
-        except ValueError:
-            return False     
+  
 
 
 
@@ -84,10 +80,24 @@ class DashReverse:
         pass
 
 
-# ----  generate encrypted dash content  ---- # 
+# ----   decrypted dash content back to mp4 ---- # 
     def run(self, src_path, dest_path):
-        if self.__is_key_valid():
-            files = os.listdir(src_path)
+        if _is_key_valid(self.kid, self.key):
+            if _is_path_valid(src_path, dest_path):
+                mp4 = glob.glob(os.path.join(src_path,"*.mp4"))
+                webm = glob.glob(os.path.join(src_path,"*.webm"))
+                if len(mp4) == 1 and len(webm) == 1:
+                    mp4, = mp4
+                    webm, = webm
+                    title = Path(mp4).stem
+                    temp_webm = os.path.join(dest_path,"temp",f'{title}.webm')
+                    temp_mp4 = os.path.join(dest_path,"temp",f'{title}.mp4')
+                    subprocess.run(f"packager in={webm},stream=audio,output={temp_webm},drm_label=AUDIO \
+                    in={mp4},stream=video,output={temp_mp4}.mp4,drm_label=SD \
+                    --enable_raw_key_decryption \
+                    --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.run(f"ffmpeg -i {dest_path}/temp/{f_title}.webm -i {dest_path}/temp/{f_title}.mp4 -c copy -map 0:a -map 1:v -strict -2 {dest_path}/{f_title}.mp4",shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
             if len(files) == 3:
                 f_t1, f_ext1 = os.path.splitext(files[0])
                 
@@ -120,11 +130,19 @@ class DashReverse:
 
 
 
-# ----  check key validitiy (private method) ---- #
-    def __is_key_valid(self):
-        try:
-            int(self.kid, 32) and int(self.key, 32)
-            return True
-        except ValueError:
-            return False     
 
+
+# check if given paths are valid
+def _is_path_valid(src_path, dest_path):
+    if Path(src_path).exists() and Path(dest_path).exists():
+        return True
+    else:
+        return False    
+
+
+def _is_key_valid(kid, key):
+    try:
+        int(kid, 32) and int(key, 32)
+        return True
+    except ValueError:
+        return False 
