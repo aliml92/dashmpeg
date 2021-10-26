@@ -38,6 +38,7 @@ class Dash:
                     in={input},stream=video,output={self.dest_path}/{v_title}/{v_title}-video.mp4,drm_label=SD \
                     --allow_codec_switching \
                     --enable_raw_key_encryption \
+                    --enable_raw_key_decryption \
                     --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key} \
                     --mpd_output {self.dest_path}/{v_title}/{v_title}.mpd ", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
