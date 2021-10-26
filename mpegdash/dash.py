@@ -25,7 +25,7 @@ class Dash:
         self.kid = kid or default_key_id
         self.key = key or default_key
 
-# ----  generate encrypted dash content  ---- # dfgfd
+# ----  generate encrypted dash content  ---- # 
     def run(self):
         if self.__is_key_valid():
             files = os.listdir(self.src_path)
@@ -79,4 +79,51 @@ class Dash:
 
 
 
+class DashReverse:
+    def __init__(self):
+        pass
+
+
+# ----  generate encrypted dash content  ---- # 
+    def run(self, src_path, dest_path):
+        if self.__is_key_valid():
+            files = os.listdir(self.src_path)
+            if len(files) == 2:
+                f_t1, f_ext1 = os.path.splitext(files[0])
+                f_t2, f_ext2 = os.path.splitext(files[1])
+                t1 = t2 = f_t1.split('-', 1)[0]
+                if f_ext1 == "webm":
+                    a = src_path + "/" + files[0]
+                else:    
+                    v = src_path + "/" + files[1]
+                subprocess.run(f"packager in={a},stream=audio,output={dest_path}/temp/{f_title}.webm,drm_label=AUDIO \
+                in={v},stream=video,output={dest_path}/temp/{f_title}.mp4,drm_label=SD \
+                --enable_raw_key_decryption \
+                --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(f"ffmpeg -i {dest_path}/temp/{f_title}.webm -i {dest_path}/temp/{f_title}.mp4 -c copy -map 0:a -map 1:v -strict -2 {dest_path}/{f_title}.mp4",shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                v =  src_path + "/" + files[0]
+                v_t, v_ext = os.path.splitext(files[0])
+                v_t = v_t.split('-', 1)[0]
+                subprocess.run(f"packager  in={v},stream=video,output={dest_path}/{v_t}.mp4,drm_label=SD \
+                --enable_raw_key_decryption \
+                --keys label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+        else:
+            print("ERROR: key_id or key is invalid. Make sure they are the ones used during encryption")
+
+# ----   set kid and key  ---- #
+    def set_key(self, kid, key):
+        self.kid = kid
+        self.key = key
+
+
+
+# ----  check key validitiy (private method) ---- #
+    def __is_key_valid(self):
+        try:
+            int(self.kid, 32) and int(self.key, 32)
+            return True
+        except ValueError:
+            return False     
 
