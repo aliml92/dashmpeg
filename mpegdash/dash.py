@@ -66,7 +66,7 @@ class Dash:
 
 # ---- return kid and key ---- #
     def get_key(self):
-        return { self.kid : self.key }
+        return [ self.kid , self.key ]
 
   
 
