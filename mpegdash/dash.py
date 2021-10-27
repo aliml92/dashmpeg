@@ -92,34 +92,40 @@ class DashReverse:
                     title = Path(mp4).stem
                     temp_webm = os.path.join(dest_path,"temp",f'{title}.webm')
                     temp_mp4 = os.path.join(dest_path,"temp",f'{title}.mp4')
-                    subprocess.run(f"packager in={webm},stream=audio,output={temp_webm},drm_label=AUDIO \
-                    in={mp4},stream=video,output={temp_mp4}.mp4,drm_label=SD \
-                    --enable_raw_key_decryption \
-                    --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    subprocess.run(f"ffmpeg -i {dest_path}/temp/{f_title}.webm -i {dest_path}/temp/{f_title}.mp4 -c copy -map 0:a -map 1:v -strict -2 {dest_path}/{f_title}.mp4",shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
-            if len(files) == 3:
-                f_t1, f_ext1 = os.path.splitext(files[0])
-                
-                f_t2, f_ext2 = os.path.splitext(files[1])
-                t1 = t2 = f_t1.split('-', 1)[0]
-                if f_ext1 == "webm":
-                    a = src_path + "/" + files[0]
-                else:    
-                    v = src_path + "/" + files[1]
-                subprocess.run(f"packager in={a},stream=audio,output={dest_path}/temp/{f_title}.webm,drm_label=AUDIO \
-                in={v},stream=video,output={dest_path}/temp/{f_title}.mp4,drm_label=SD \
-                --enable_raw_key_decryption \
-                --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                subprocess.run(f"ffmpeg -i {dest_path}/temp/{f_title}.webm -i {dest_path}/temp/{f_title}.mp4 -c copy -map 0:a -map 1:v -strict -2 {dest_path}/{f_title}.mp4",shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    output = os.path.join(dest_path,f'{title}.mp4')
+                    try:
+                        sp = subprocess.run(f"packager in={webm},stream=audio,output={temp_webm},drm_label=AUDIO \
+                        in={mp4},stream=video,output={temp_mp4}.mp4,drm_label=SD \
+                        --enable_raw_key_decryption \
+                        --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                        if sp.returncode != 0:
+                            print(sp.stderr)
+                        else:
+                            try:
+                               fp = subprocess.run(f"ffmpeg -i {temp_webm} -i {temp_mp4} -c copy -map 0:a -map 1:v -strict -2 {output}",shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                               if fp.returncode != 0:
+                                    print(fp.stderr)
+                                # todo # delete temp files 
+                            except FileNotFoundError as e:
+                                print(e)
+                    except FileNotFoundError as e:
+                        print(e)
+                elif len(mp4) == 1 and len(webm) == 0:
+                    mp4, = mp4
+                    title = Path(mp4).stem
+                    output = os.path.join(dest_path,f'{title}.mp4')
+                    try:
+                        sp = subprocess.run(f"packager in={mp4},stream=video,output={output},drm_label=SD \
+                        --enable_raw_key_decryption \
+                        --keys label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                        if sp.returncode != 0:
+                            print(sp.stderr)
+                    except FileNotFoundError as e:
+                        print(e)
+                else:
+                    print("ERROR: There must be only one pair of encrypted videos and audios or only one encrypted video")        
             else:
-                v =  src_path + "/" + files[0]
-                v_t, v_ext = os.path.splitext(files[0])
-                v_t = v_t.split('-', 1)[0]
-                subprocess.run(f"packager  in={v},stream=video,output={dest_path}/{v_t}.mp4,drm_label=SD \
-                --enable_raw_key_decryption \
-                --keys label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
+                 print("ERROR: make sure that source and destination folders exist")            
         else:
             print("ERROR: key_id or key is invalid. Make sure they are the ones used during encryption")
 
