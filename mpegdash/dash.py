@@ -90,12 +90,13 @@ class DashReverse:
                     mp4, = mp4
                     webm, = webm
                     title = Path(mp4).stem
+                    title = title.split('-', 1)[0]
                     temp_webm = os.path.join(dest_path,"temp",f'{title}.webm')
                     temp_mp4 = os.path.join(dest_path,"temp",f'{title}.mp4')
                     output = os.path.join(dest_path,f'{title}.mp4')
                     try:
                         sp = subprocess.run(f"packager in={webm},stream=audio,output={temp_webm},drm_label=AUDIO \
-                        in={mp4},stream=video,output={temp_mp4}.mp4,drm_label=SD \
+                        in={mp4},stream=video,output={temp_mp4},drm_label=SD \
                         --enable_raw_key_decryption \
                         --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
                         if sp.returncode != 0:
