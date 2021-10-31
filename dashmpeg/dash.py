@@ -26,7 +26,7 @@ class Dash:
         self.key = key or DEFAULT_KEY
         self.dash_folders = []
         self.mpd_paths = []
-        self.recoved_files = []
+        self.recoved_file = ""
 
 
     """ generate encrypted dash content  """  
@@ -151,7 +151,7 @@ class Recover:
                     if fp.returncode != 0:
                         logging.error(fp.stderr)
                         return
-                    self.recovered_files.append(recovered_mp4)    
+                    self.recovered_file = recovered_mp4    
                     # TODO # delete temporary files 
                 except FileNotFoundError as e:
                     logging.error(e)
@@ -168,7 +168,7 @@ class Recover:
                 if sp.returncode != 0:
                     logging.error(sp.stderr)
                     return
-                self.recovered_files.append(recovered_mp4)      
+                self.recovered_file = recovered_mp4        
             except FileNotFoundError as e:
                 logging.error(e)
         else:
