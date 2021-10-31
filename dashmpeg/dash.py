@@ -24,6 +24,9 @@ class Dash:
         self.dest_path = dest_path
         self.kid = kid or DEFAULT_KEY_ID
         self.key = key or DEFAULT_KEY
+        self.dash_folders = []
+        self.mpd_paths = []
+        self.recoved_files = []
 
 
     """ generate encrypted dash content  """  
@@ -46,25 +49,37 @@ class Dash:
             except FileNotFoundError as e:
                 logging.error(e)
             if result.returncode == 0:
-                sp = subprocess.run(f"packager in={input},stream=audio,output={self.dest_path}/{v_title}/{v_title}-audio.webm,drm_label=AUDIO \
-                in={input},stream=video,output={self.dest_path}/{v_title}/{v_title}-video.mp4,drm_label=SD \
-                --allow_codec_switching \
-                --enable_raw_key_encryption \
-                --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key} \
-                --mpd_output {self.dest_path}/{v_title}/{v_title}.mpd ", shell=True,  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                dest_webm = os.path.join(self.dest_path,v_title,f'{v_title}-audio.webm')
+                dest_mp4 = os.path.join(self.dest_path,v_title,f'{v_title}-video.mp4')
+                dash_folder = os.path.join(self.dest_path,v_title)
+                mpd_file = os.path.join(dash_folder,f'{v_title}.mpd')
+                sp = subprocess.run(f"packager in={input},stream=audio,output={dest_webm},drm_label=AUDIO \
+                    in={input},stream=video,output={dest_mp4},drm_label=SD \
+                    --allow_codec_switching \
+                    --enable_raw_key_encryption \
+                    --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key} \
+                    --mpd_output {mpd_file} ", 
+                    shell=True,  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
                 if sp.returncode != 0:
                     logging.error(sp.stderr)
                     return
+                self.dash_folders.append(dash_folder)
+                self.mpd_paths.append(mpd_file)    
             else:
-                sp = subprocess.run(f"packager  in={input},stream=video,output={self.dest_path}/{v_title}/{v_title}-video.mp4,drm_label=SD \
-                --allow_codec_switching \
-                --enable_raw_key_encryption \
-                --keys label=SD:key_id={self.kid}:key={self.key} \
-                --mpd_output {self.dest_path}/{v_title}/{v_title}.mpd ", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                dest_mp4 = os.path.join(self.dest_path,v_title,f'{v_title}-video.mp4')
+                dash_folder = os.path.join(self.dest_path,v_title)
+                mpd_file = os.path.join(dash_folder,f'{v_title}.mpd')
+                sp = subprocess.run(f"packager  in={input},stream=video,output={dest_mp4},drm_label=SD \
+                    --allow_codec_switching \
+                    --enable_raw_key_encryption \
+                    --keys label=SD:key_id={self.kid}:key={self.key} \
+                    --mpd_output {mpd_file} ", 
+                    shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
                 if sp.returncode != 0:
                     logging.error(sp.stderr)
                     return
-
+                self.dash_folders.append(dash_folder)
+                self.mpd_paths.append(mpd_file)  
 
     """  set kid and key  """
     def set_key(self, kid, key):
@@ -82,7 +97,15 @@ class Dash:
     def get_key(self):
         return [ self.kid , self.key ]
 
-  
+    """ get dash folders """
+    """ used to recover dash content back to mp4 """
+    def get_dash_folders(self):
+        return self.dash_folders    
+
+    """ get mpd paths """
+    """ possibly used with shaka player """
+    def get_mpd_paths(self):
+        return self.mpd_paths
 
 
 
@@ -90,7 +113,7 @@ class Dash:
 """ Recreate mp4 files from dash content """
 """ |||||||||||||||||||||||||||||||||||| """
 
-class DashReverse:
+class Recover:
     def __init__(self):
         pass
 
@@ -100,7 +123,7 @@ class DashReverse:
             logging.error(f"{self.kid} or {self.key} is invalid. Make sure they are hex strings with 32 characters")
             return
         if not _is_path_valid(src_path, dest_path):
-            logging.error(f"Invalid or Non-existent path: {src_path} or {dest_path}")
+            logging.error(f"Invalid or non-existent path: {src_path} or {dest_path}")
             return
         mp4 = glob.glob(os.path.join(src_path,"*.mp4"))
         webm = glob.glob(os.path.join(src_path,"*.webm"))
@@ -112,41 +135,44 @@ class DashReverse:
             title = title.split('-', 1)[0]
             temp_webm = os.path.join(dest_path,"temp",f'{title}.webm')
             temp_mp4 = os.path.join(dest_path,"temp",f'{title}.mp4')
-            output = os.path.join(dest_path,f'{title}.mp4')
+            recovered_mp4 = os.path.join(dest_path,f'{title}.mp4')
             try:
                 sp = subprocess.run(f"packager in={webm},stream=audio,output={temp_webm},drm_label=AUDIO \
-                in={mp4},stream=video,output={temp_mp4},drm_label=SD \
-                --enable_raw_key_decryption \
-                --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                    in={mp4},stream=video,output={temp_mp4},drm_label=SD \
+                    --enable_raw_key_decryption \
+                    --keys label=AUDIO:key_id={self.kid}:key={self.key},label=SD:key_id={self.kid}:key={self.key}", 
+                    shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
                 if sp.returncode != 0:
                     logging.error(sp.stderr)
-                    return
-                else:
-                    try:
-                        fp = subprocess.run(f"ffmpeg -i {temp_webm} -i {temp_mp4} -c copy -map 0:a -map 1:v -strict -2 {output}",shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-                        if fp.returncode != 0:
-                            logging.error(fp.stderr)
-                            return
-                        # TODO # delete temporary files 
-                    except FileNotFoundError as e:
-                        logging.error(e)
+                    return    
+                try:
+                    fp = subprocess.run(f"ffmpeg -i {temp_webm} -i {temp_mp4} -c copy -map 0:a -map 1:v -strict -2 {recovered_mp4}",
+                        shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                    if fp.returncode != 0:
+                        logging.error(fp.stderr)
+                        return
+                    self.recovered_files.append(recovered_mp4)    
+                    # TODO # delete temporary files 
+                except FileNotFoundError as e:
+                    logging.error(e)
             except FileNotFoundError as e:
                 logging.error(e)
         elif vlen == 1 and alen == 0:
             mp4, = mp4
             title = Path(mp4).stem
-            output = os.path.join(dest_path,f'{title}.mp4')
+            recovered_mp4 = os.path.join(dest_path,f'{title}.mp4')
             try:
-                sp = subprocess.run(f"packager in={mp4},stream=video,output={output},drm_label=SD \
-                --enable_raw_key_decryption \
-                --keys label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+                sp = subprocess.run(f"packager in={mp4},stream=video,output={recovered_mp4},drm_label=SD \
+                    --enable_raw_key_decryption \
+                    --keys label=SD:key_id={self.kid}:key={self.key}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
                 if sp.returncode != 0:
                     logging.error(sp.stderr)
                     return
+                self.recovered_files.append(recovered_mp4)      
             except FileNotFoundError as e:
-                print(e)
+                logging.error(e)
         else:
-            logging.error("There must be only one pair of encrypted videos and audios or only one encrypted video")                
+            logging.error(f"{src_path} must contain one pair of a/v stream files or single v stream file")                
             return
 
 
@@ -155,7 +181,9 @@ class DashReverse:
         self.kid = kid
         self.key = key
 
-
+    """ get recovered mp4 files paths """
+    def get_recovered(self):
+        return self.recoved_files
 
 """ ||||||||||||||||| """
 """ Utility functions """
