@@ -1,0 +1,9 @@
+# Distribution / packaging
+build/
+dist/
+sdist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+
