@@ -43,7 +43,7 @@ class Dash:
             return
         for video in videos:
             v_title = Path(video).stem
-            input = self.src_path + "/" + video
+            input = video
             try:
                 result = subprocess.run(f"packager input={input} --dump_stream_info | grep -w 'Audio' ", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except FileNotFoundError as e:
