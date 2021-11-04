@@ -1,11 +1,12 @@
-import setuptools
+from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name='dashmpeg',
-    version='0.0.6',
+    version='0.0.10',
+    packages = find_packages(),
     author='Alisher M.',
     author_email='',
     description='Super simple wrapper around shaka-packager',
@@ -15,8 +16,11 @@ setuptools.setup(
     project_urls = {
         "Bug Tracker": "https://github.com/aliml92/dashmpeg/issues"
     },
+    package_data={
+      'dashmpeg': ['bin/*'],
+    },
     license='MIT',
     include_package_data=True,
-    packages=['dashmpeg'],
+    zip_safe=False,
     install_requires=[''],
 )
