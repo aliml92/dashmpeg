@@ -4,6 +4,7 @@ import glob
 from pathlib import Path
 import logging
 
+
 """ default key id and key value """
 DEFAULT_KEY_ID = "0123456789abcdef0123456789abcdef"
 DEFAULT_KEY = "0123456789abcdef0123456789abcdef"
@@ -184,6 +185,12 @@ class Recover:
     """ get recovered mp4 files paths """
     def get_recovered(self):
         return self.recoved_files
+
+def addBinariesToPath(module_name):
+    module_path = os.path.dirname(module_name.__file__)
+    bin_path = os.path.join(module_path, "bin")
+    os.environ["PATH"] += os.pathsep + bin_path
+
 
 """ ||||||||||||||||| """
 """ Utility functions """
