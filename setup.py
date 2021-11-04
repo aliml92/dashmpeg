@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='dashmpeg',
-    version='0.0.5',
+    version='0.0.6',
     author='Alisher M.',
     author_email='',
     description='Super simple wrapper around shaka-packager',
@@ -16,6 +16,7 @@ setuptools.setup(
         "Bug Tracker": "https://github.com/aliml92/dashmpeg/issues"
     },
     license='MIT',
+    include_package_data=True,
     packages=['dashmpeg'],
     install_requires=[''],
 )
