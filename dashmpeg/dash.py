@@ -74,6 +74,7 @@ class Dash:
                 sp = subprocess.run(f"packager  in={input},stream=video,output={dest_mp4},drm_label=SD \
                     --allow_codec_switching \
                     --enable_raw_key_encryption \
+                    --clear_lead 0 \
                     --keys label=SD:key_id={self.kid}:key={self.key} \
                     --mpd_output {mpd_file} ", 
                     shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
